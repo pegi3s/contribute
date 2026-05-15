@@ -42,6 +42,7 @@ ENV DISPLAY=:0
 
 RUN apt update && apt install -y python3-pip
 RUN pip install streamlit --break-system-packages
+RUN pip install streamlit-scroll-to-top --break-system-packages
 RUN mkdir -p ~/.streamlit/
 RUN echo "[browser]\ngatherUsageStats = false\n" > ~/.streamlit/config.toml
 RUN echo "[server]\nheadless = true\n" > ~/.streamlit/config.toml
@@ -58,7 +59,9 @@ WORKDIR /opt
 
 RUN apt install -y git 
 
+#RUN git clone https://github.com/pegi3s/dockerfiles.git #########################
+
 CMD ["/opt/start"]
  
 
-
+# docker run -v /var/run/docker.sock:/var/run/docker.sock   -v /contribute_history:/contribute_history -e USERID=$UID   -e USER=$USER   -e DISPLAY=$DISPLAY   -v /tmp/.X11-unix:/tmp/.X11-unix   -v $PWD:/data pegi3s/contribute

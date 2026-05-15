@@ -17,6 +17,7 @@ import requests
 import io
 import tempfile
 import html
+from streamlit_scroll_to_top import scroll_to_here
 
 
 # base directory where all project-related data wiil be stored
@@ -625,6 +626,12 @@ def nav_button(label, target_page, **kwargs):
     """Navigation button with guard against unsaved changes."""
     if st.button(label, **kwargs):
         navigation_guard(target_page)
+        
+def nav_button_sidebar(label, target_page, **kwargs):
+    """Navigation button with guard against unsaved changes."""
+
+    if st.sidebar.button(label, **kwargs):
+        navigation_guard(target_page)
 
 
 # 1. PAGE CONFIGURATION
@@ -655,6 +662,7 @@ def get_remote_built_list():
 def change_page(name):
     """Update current page in session state."""
     st.session_state.current_page = name
+    scroll()
 
 
 @st.dialog("⚠️ Reset All Data")
@@ -698,6 +706,7 @@ def confirm_reset_dialog():
 
 
 def sidebar_nave():
+    
     """Sidebar navigation component."""
     page_options = [
         "Create Project",
@@ -709,6 +718,9 @@ def sidebar_nave():
         "Build and Test",
         "Status",
     ]
+
+    # Button Back to Home
+    nav_button_sidebar("← Back to Home", "Home")
 
     current_index = (
         page_options.index(st.session_state.current_page)
@@ -813,9 +825,18 @@ if "active_project" not in st.session_state:
 if "test_success" not in st.session_state:
     st.session_state.test_success = False
 
-
 st.session_state.built_list = get_remote_built_list()
 
+if 'scroll_to_top' not in st.session_state:
+    st.session_state.scroll_to_top = False
+
+if st.session_state.scroll_to_top:
+    scroll_to_here(0, key='top')
+
+    st.session_state.scroll_to_top = False
+
+def scroll():
+    st.session_state.scroll_to_top = True
 
 # --- HOME PAGE ---
 if st.session_state.current_page == "Home":
@@ -1032,8 +1053,18 @@ if st.session_state.current_page == "Home":
 
     st.stop()
 
+
 # Button Back to Home
-nav_button("← Back to Home", "Home")
+#nav_button("← Back to Home", "Home")
+
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # --- CREATE PROJECT ---
 if st.session_state.current_page == "Create Project":
@@ -2021,6 +2052,11 @@ elif st.session_state.current_page == "Dockerfile":
 
             edited = st.text_area("Dockerfile", height=400, key=key)
 
+        st.warning("""
+        ⚠️ Make sure all required files are present in the project folder.
+        Docker can only access files inside this directory during build.
+        """)
+
         col_save, col_check, col_build = st.columns(3)
 
         apply_primary_button_style()
@@ -2377,6 +2413,11 @@ elif st.session_state.current_page == "Dockerfile":
     st.subheader("Generated Dockerfile Preview")
     st.code(final_dockerfile, language="dockerfile")
 
+    st.warning("""
+    ⚠️ Make sure all required files are present in the project folder.
+    Docker can only access files inside this directory during build.
+    """)
+    
     col_save, col_check, col_build = st.columns(3)
 
     apply_primary_button_style()
@@ -3066,8 +3107,21 @@ elif st.session_state.current_page == "README":
                                     )
                             return value
 
+                        extra_label = ""
+                        if p in ["directory_description", "input_description", "output_description"]:
+                            extra_label = "  (Complete the sentence)"
+
+                            st.markdown(f"""
+                            <style>
+                            textarea[aria-label="{display_label}{extra_label}"]::placeholder {{
+                                color: black !important;
+                                opacity: 1 !important;
+                            }}
+                            </style>
+                            """, unsafe_allow_html=True)
+
                         return col.text_area(
-                            display_label,
+                            f"{display_label}{extra_label}",
                             value=saved_values.get(p, ""),
                             placeholder=placeholder_hints.get(p, f"Enter {label.lower()}..."),
                             help=field_help.get(p, None),
@@ -3187,7 +3241,7 @@ elif st.session_state.current_page == "README":
             "⚠️ **Manual README Override**\n\n"
             "Changes made in the **Manual Adjustment (README)** will override the form values.\n\n"
             "- Editing the README here replaces the entire content generated from the form\n"
-            "- Editing the form afterwards will overwrite the manual changes completely\n"
+            "- Editing the form afterwards will overwrite the manual changes completely\n\n"
             "**Recommendation:** Use manual adjustment only for final tweaks to avoid losing changes."
         )
         
@@ -3391,7 +3445,7 @@ elif st.session_state.current_page == "Metadata":
     )
 
     # --- 1. CONFIGURATIONS ---
-    TEMPLATE_URL = "https://raw.githubusercontent.com/pegi3s/dockerfiles/refs/heads/master/metadata/tools/templates/template_metadata.json" 
+    TEMPLATE_URL = "https://raw.githubusercontent.com/caroleite05/bdip_tools_exp/refs/heads/main/templates/template_metadata.json"  ### FALTA AQUI
     GLOBAL_META_URL = "https://raw.githubusercontent.com/pegi3s/dockerfiles/master/metadata/metadata.json"
 
     FORCED_EMPTY_LISTS = {
@@ -3646,6 +3700,12 @@ elif st.session_state.current_page == "Metadata":
                 gui_cmd = processed_values.get("gui_command", "").strip()
                 processed_values["gui"] = bool(gui_cmd)
                 processed_values["status"] = "Usable"
+                
+                # Garantir campos hidden obrigatórios
+                for field in FORCED_EMPTY_LISTS:
+
+                    if field not in processed_values:
+                        processed_values[field] = []
 
                 applied_metadata_preview = False
                 try:
@@ -3696,7 +3756,7 @@ elif st.session_state.current_page == "Metadata":
             "⚠️ **Manual JSON Override**\n\n"
             "Changes made in the **Manual Adjustment (JSON)** will override the form values.\n\n"
             "- Editing the JSON will overwrite the corresponding fields from the form\n"
-            "- Editing the form afterwards will overwrite the entire Manual Adjustment\n"
+            "- Editing the form afterwards will overwrite the entire Manual Adjustment\n\n"
             "**Recommendation:** Use manual adjustment only for final tweaks to avoid losing changes."
         )
         
@@ -5362,7 +5422,15 @@ elif st.session_state.current_page == "Status":
 
 # --- TEST DOCKER IMAGE (FROM FOR_SUBMISSION) ---
 elif st.session_state.current_page == "Test Docker Image":
-    st.header("⚙️ Build & Test (Submission Package)")
+    col1, col2 = st.columns([7,1])
+    
+    with col1:
+        st.header("⚙️ Build & Test (Submission Package)")
+    
+    with col2:
+        st.markdown("<div style='height: 12px'></div>", unsafe_allow_html=True)
+        # Button Back to Home
+        nav_button("← Back to Home", "Home")
 
     # -------------------------------------------------
     # PROJECT SELECTION
