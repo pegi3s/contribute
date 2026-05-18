@@ -3445,7 +3445,7 @@ elif st.session_state.current_page == "Metadata":
     )
 
     # --- 1. CONFIGURATIONS ---
-    TEMPLATE_URL = "https://raw.githubusercontent.com/caroleite05/bdip_tools_exp/refs/heads/main/templates/template_metadata.json"  ### FALTA AQUI
+    TEMPLATE_URL = "https://raw.githubusercontent.com/pegi3s/dockerfiles/refs/heads/master/metadata/tools/templates/template_metadata.json"  
     GLOBAL_META_URL = "https://raw.githubusercontent.com/pegi3s/dockerfiles/master/metadata/metadata.json"
 
     FORCED_EMPTY_LISTS = {
