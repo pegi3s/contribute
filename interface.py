@@ -5559,7 +5559,7 @@ elif st.session_state.current_page == "Test Docker Image":
             "docker",
             "build",
             "-t",
-            f"{project.lower()}_submission",
+            f"pegi3s/{project.lower()}",
             str(submission_dir),
         ]
 
